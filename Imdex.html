@@ -1,1 +1,289 @@
 
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة خرز الألماس - مع دليل الإرشادات</title>
+    <style>
+        :root {
+            --bg-color: #101820;
+            --bg-gradient: radial-gradient(circle, #101820 0%, #000000 100%);
+            --text-color: #ecf0f1;
+            --grid-color: #e67e22;
+            --dot-color: #333;
+            --btn-border: #e67e22;
+            --diamond-p1: #ff3131; 
+            --diamond-p2: #00d2ff;
+        }
+        [data-theme="light"] {
+            --bg-color: #BDBDBC;
+            --bg-gradient: none;
+            --text-color: #2c3e50;
+            --grid-color: #2980b9;
+            --dot-color: #ffffff;
+            --btn-border: #2980b9;
+            --diamond-p1: #ff0000;
+            --diamond-p2: #00aaff;
+        }
+        
+        body { 
+            margin: 0; display: flex; flex-direction: column; align-items: center; 
+            height: 100vh; background-color: var(--bg-color); background-image: var(--bg-gradient); 
+            font-family: 'Segoe UI', sans-serif; transition: 0.5s; overflow: hidden; padding-top: 10px;
+        }
+
+        /* لوحة البداية */
+        #startOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 1000; transition: 0.5s;
+        }
+        .start-card {
+            background: #1a1a1a; padding: 25px; border-radius: 20px;
+            border: 2px solid var(--btn-border); text-align: center; max-width: 320px; width: 85%;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+        .level-btn {
+            display: block; width: 100%; padding: 10px; margin: 6px 0;
+            border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05); color: white; cursor: pointer;
+            font-weight: bold; transition: 0.3s; font-size: 14px;
+        }
+        .level-btn:hover { background: var(--btn-border); transform: scale(1.03); }
+        
+        .info-btn { background: transparent; border: 1px solid #999; color: #ccc; margin-top: 15px; }
+
+        /* نافذة الإرشادات */
+        #rulesModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: none; justify-content: center;
+            align-items: center; z-index: 1100; backdrop-filter: blur(5px);
+        }
+        .rules-content {
+            background: var(--bg-color); color: var(--text-color);
+            padding: 25px; border-radius: 20px; max-width: 350px; width: 90%;
+            border: 1px solid var(--btn-border); position: relative;
+            max-height: 80vh; overflow-y: auto;
+        }
+        .rules-content h3 { border-bottom: 2px solid var(--btn-border); padding-bottom: 10px; margin-top: 0; }
+        .rules-content ul { padding-right: 20px; line-height: 1.6; }
+        .rules-content li { margin-bottom: 10px; }
+        .close-rules { 
+            background: var(--btn-border); color: white; border: none; 
+            padding: 10px 20px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold;
+        }
+
+        #confettiCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+        .top-controls { display: flex; gap: 8px; margin-bottom: 10px; z-index: 10; }
+        .mode-btn, .theme-btn { padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: var(--text-color); cursor: pointer; font-size: 13px; font-weight: bold; }
+        
+        .scoreboard {
+            display: flex; justify-content: space-between; align-items: center;
+            width: 95%; max-width: 350px; background: rgba(0, 0, 0, 0.7); 
+            backdrop-filter: blur(10px); border-radius: 10px; padding: 8px 20px;
+            margin-bottom: 10px; z-index: 10; border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .score-item { text-align: center; color: white; }
+        .score-num { font-size: 24px; font-weight: 900; margin: 0 10px; }
+        #p1Score { color: #ff3131; }
+        #p2Score { color: #00d2ff; }
+        
+        #gameCanvas { z-index: 5; cursor: pointer; }
+        .btn-reset { margin-top: 15px; padding: 10px 40px; background: transparent; color: var(--text-color); border: 2px solid var(--btn-border); border-radius: 50px; cursor: pointer; font-weight: bold; z-index: 10; }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <div id="startOverlay">
+        <div class="start-card">
+            <h2 style="color:white; margin-top:0">💎 خرز الألماس</h2>
+            <p style="color:#888; font-size:13px">اختر مستوى التحدي:</p>
+            <button class="level-btn" onclick="startGame(0)">🎓 تعليم</button>
+            <button class="level-btn" onclick="startGame(1)">🌱 سهل</button>
+            <button class="level-btn" onclick="startGame(2)">⚖️ متوسط</button>
+            <button class="level-btn" onclick="startGame(3)">⚡ فوق المتوسط</button>
+            <button class="level-btn" onclick="startGame(4)">🔥 صعب</button>
+            <button class="level-btn info-btn" onclick="toggleRules(true)">📖 إرشادات اللعبة</button>
+        </div>
+    </div>
+
+    <div id="rulesModal">
+        <div class="rules-content">
+            <h3>📖 قانون اللعبة</h3>
+            <ul>
+                <li><strong>مرحلة الوضع:</strong> يبدأ كل لاعب بوضع 3 خرزات ألماس بالتناوب على نقاط الشبكة الفارغة.</li>
+                <li><strong>مرحلة التحريك:</strong> بعد وضع الخرزات الثلاث، يبدأ اللاعبون بتحريك أي خرزة خاصة بهم إلى أي نقطة فارغة مجاورة.</li>
+                <li><strong>الهدف:</strong> يجب عليك تكوين خط مستقيم من 3 خرزات (أفقياً أو عمودياً).</li>
+                <li><strong>الفوز:</strong> أول من ينجح في ترتيب 3 خرزات على استقامة واحدة يعتبر فائزاً بالجولة.</li>
+            </ul>
+            <button class="close-rules" onclick="toggleRules(false)">فهمت، لنبدأ!</button>
+        </div>
+    </div>
+
+    <canvas id="confettiCanvas"></canvas>
+
+    <div class="top-controls">
+        <button class="theme-btn" onclick="toggleTheme()">🌓</button>
+        <button class="mode-btn" onclick="location.reload()">🏠 القائمة</button>
+    </div>
+
+    <div class="scoreboard">
+        <div class="score-item"><span>لاعب 1</span><span id="p1Score" class="score-num">0</span></div>
+        <div style="color: white; font-weight: bold;">VS</div>
+        <div class="score-item"><span id="p2Score" class="score-num">0</span><span id="p2Label">آلي</span></div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+    <button class="btn-reset" onclick="resetGame()">إعادة اللعب</button>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const cCanvas = document.getElementById('confettiCanvas');
+        const cCtx = cCanvas.getContext('2d');
+
+        canvas.width = 400; canvas.height = 400;
+        function resizeConfetti() { cCanvas.width = window.innerWidth; cCanvas.height = window.innerHeight; }
+        window.addEventListener('resize', resizeConfetti); resizeConfetti();
+
+        const size = 320, xOffset = (canvas.width - size) / 2, yOffset = (canvas.height - size) / 2;
+        const midX = xOffset + size / 2, midY = yOffset + size / 2;
+
+        let difficulty = 2, turn = 'p1', gameOver = false, selectedBead = null;
+        let p1Score = 0, p2Score = 0, points = [], movingBeads = [], confetti = [];
+
+        function toggleRules(show) {
+            document.getElementById('rulesModal').style.display = show ? 'flex' : 'none';
+        }
+
+        function startGame(lvl) {
+            difficulty = lvl;
+            document.getElementById('startOverlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('startOverlay').style.display = 'none', 500);
+            resetGame();
+        }
+
+        function initPoints() {
+            points = [
+                { id: 0, x: xOffset, y: yOffset, owner: null }, { id: 1, x: midX, y: yOffset, owner: null }, { id: 2, x: xOffset + size, y: yOffset, owner: null },
+                { id: 3, x: xOffset, y: midY, owner: null }, { id: 4, x: midX, y: midY, owner: null }, { id: 5, x: xOffset + size, y: midY, owner: null },
+                { id: 6, x: xOffset, y: yOffset + size, owner: null }, { id: 7, x: midX, y: yOffset + size, owner: null }, { id: 8, x: xOffset + size, y: yOffset + size, owner: null }
+            ];
+        }
+
+        function createConfetti() {
+            confetti = [];
+            const colors = ['#ff3131', '#00d2ff', '#e67e22', '#2ecc71', '#f1c40f'];
+            for (let i = 0; i < 150; i++) {
+                confetti.push({
+                    x: Math.random() * window.innerWidth,
+                    y: -20,
+                    size: Math.random() * 7 + 3,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    speedY: Math.random() * 5 + 2,
+                    speedX: Math.random() * 4 - 2,
+                    alpha: 1,
+                    fadeRate: 0.005 
+                });
+            }
+        }
+
+        function aiLogic() {
+            if (gameOver) return;
+            const myBeads = points.filter(p => p.owner === 'p2'), empty = points.filter(p => !p.owner);
+            const winPatterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8]];
+            const shouldMakeMistake = Math.random() > (difficulty * 0.25);
+
+            if (myBeads.length < 3) {
+                let target = empty[Math.floor(Math.random() * empty.length)];
+                target.owner = 'p2';
+                finalizeTurn();
+            } else {
+                let b = myBeads[Math.floor(Math.random() * myBeads.length)], t = empty[Math.floor(Math.random() * empty.length)];
+                movingBeads.push({ id: t.id, currentX: b.x, currentY: b.y, targetX: t.x, targetY: t.y, color: getComputedStyle(document.body).getPropertyValue('--diamond-p2') });
+                t.owner = 'p2'; b.owner = null;
+                finalizeTurn();
+            }
+        }
+
+        function drawBead(px, py, color, isSelected) {
+            const r = 22; ctx.save();
+            ctx.shadowBlur = isSelected ? 12 : 8;
+            ctx.shadowColor = color; 
+            ctx.beginPath();
+            ctx.moveTo(px - r*0.6, py - r*0.3); ctx.lineTo(px + r*0.6, py - r*0.3);
+            ctx.lineTo(px + r, py + r*0.1); ctx.lineTo(px, py + r); ctx.lineTo(px - r, py + r*0.1); ctx.closePath();
+            let grad = ctx.createLinearGradient(px-r, py-r*0.3, px+r, py+r);
+            grad.addColorStop(0, '#fff'); grad.addColorStop(0.2, color); grad.addColorStop(0.7, color); grad.addColorStop(1, '#000');
+            ctx.fillStyle = grad; ctx.fill(); 
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.lineWidth = 1; ctx.stroke(); 
+            if(isSelected) { ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke(); }
+            ctx.restore();
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const style = getComputedStyle(document.body);
+            ctx.strokeStyle = style.getPropertyValue('--grid-color'); ctx.lineWidth = 5;
+            ctx.strokeRect(xOffset, yOffset, size, size);
+            ctx.beginPath(); ctx.moveTo(midX, yOffset); ctx.lineTo(midX, yOffset+size); 
+            ctx.moveTo(xOffset, midY); ctx.lineTo(xOffset+size, midY); ctx.stroke();
+            
+            points.forEach(p => {
+                if (!p.owner) {
+                    ctx.fillStyle = style.getPropertyValue('--dot-color'); ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI*2); ctx.fill();
+                } else if (!movingBeads.find(mb => mb.id === p.id)) {
+                    drawBead(p.x, p.y, p.owner === 'p1' ? style.getPropertyValue('--diamond-p1') : style.getPropertyValue('--diamond-p2'), selectedBead === p);
+                }
+            });
+            movingBeads.forEach((mb, index) => {
+                mb.currentX += (mb.targetX - mb.currentX) * 0.15; mb.currentY += (mb.targetY - mb.currentY) * 0.15;
+                drawBead(mb.currentX, mb.currentY, mb.color, false);
+                if (Math.hypot(mb.targetX - mb.currentX, mb.targetY - mb.currentY) < 1) movingBeads.splice(index, 1);
+            });
+            cCtx.clearRect(0, 0, cCanvas.width, cCanvas.height);
+            confetti.forEach((p, index) => {
+                p.y += p.speedY; p.x += p.speedX; p.alpha -= p.fadeRate;
+                if (p.alpha <= 0) confetti.splice(index, 1);
+                else { cCtx.globalAlpha = p.alpha; cCtx.fillStyle = p.color; cCtx.fillRect(p.x, p.y, p.size, p.size); }
+            });
+            requestAnimationFrame(animate);
+        }
+
+        function finalizeTurn() {
+            const winPatterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8]];
+            if (winPatterns.some(pat => pat.every(i => points[i].owner === turn))) {
+                turn === 'p1' ? p1Score++ : p2Score++;
+                document.getElementById('p1Score').innerText = p1Score;
+                document.getElementById('p2Score').innerText = p2Score;
+                gameOver = true; createConfetti();
+            } else {
+                turn = (turn === 'p1') ? 'p2' : 'p1';
+                if (turn === 'p2') setTimeout(aiLogic, 600);
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (gameOver || turn === 'p2' || movingBeads.length > 0) return;
+            const rect = canvas.getBoundingClientRect();
+            const mX = e.clientX - rect.left, mY = e.clientY - rect.top;
+            const clicked = points.find(p => Math.hypot(p.x - mX, p.y - mY) < 40);
+            if (!clicked) return;
+            if (points.filter(p => p.owner === 'p1').length < 3) {
+                if (!clicked.owner) { clicked.owner = 'p1'; finalizeTurn(); }
+            } else {
+                if (clicked.owner === 'p1') selectedBead = clicked;
+                else if (selectedBead && !clicked.owner) {
+                    movingBeads.push({ id: clicked.id, currentX: selectedBead.x, currentY: selectedBead.y, targetX: clicked.x, targetY: clicked.y, color: getComputedStyle(document.body).getPropertyValue('--diamond-p1') });
+                    clicked.owner = 'p1'; selectedBead.owner = null; selectedBead = null; finalizeTurn();
+                }
+            }
+        });
+        function toggleTheme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
+        function resetGame() { initPoints(); turn = 'p1'; gameOver = false; confetti = []; }
+        initPoints(); animate();
+    </script>
+</body>
+</html>
